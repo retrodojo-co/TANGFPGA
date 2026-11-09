@@ -1,0 +1,36 @@
+name: Verify firmware download
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Published platform tag, such as 20k-v0.1.0
+        required: true
+        type: string
+
+permissions: {}
+
+jobs:
+  verify:
+    if: github.repository == 'retrodojo-co/TANGFPGA'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Download and verify public release assets
+        env:
+          TAG: ${{ inputs.tag }}
+        shell: bash
+        run: |
+          number='(0|[1-9][0-9]*)'
+          if [[ ! "$TAG" =~ ^(9k|20k|60k)-v$number\.$number\.$number$ ]]; then
+            echo 'Expected a platform tag in the form 20k-v0.1.0.'
+            exit 1
+          fi
+          cd "$(mktemp -d)"
+          asset="TANGFPGA-$TAG-firmware.zip"
+          checksum="${asset%.zip}-SHA256.txt"
+          url="https://github.com/retrodojo-co/TANGFPGA/releases/download/$TAG"
+          curl --fail --silent --show-error --location --output "$asset" "$url/$asset"
+          curl --fail --silent --show-error --location --output "$checksum" "$url/$checksum"
+          sha256sum "$asset" | cmp -- "$checksum" -
+          unzip -tq "$asset"
