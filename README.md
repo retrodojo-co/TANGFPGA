@@ -1,4 +1,4 @@
-![TANGFPGA](assets/logos/tangfpga.svg)
+![TANGFPGA](assets/logos/tangfpga.png)
 
 # TANGFPGA
 
