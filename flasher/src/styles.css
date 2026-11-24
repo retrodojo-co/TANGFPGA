@@ -38,7 +38,7 @@ main { flex: 1; min-height: 0; padding: 20px 24px; display: flex; flex-direction
 .selected-release { font-size: 12px; color: #b5b5b5; min-height: 70px; padding: 14px 0; overflow-wrap: anywhere; }
 .selected-release strong, .selected-release span { display: block; }
 .selected-release strong { color: #ffffff; font-weight: 600; margin-bottom: 4px; }
-.primary { background: #ff2535; color: #ffffff; min-height: 44px; font-size: 12px; font-weight: 700; padding: 10px; }
+.primary { background: #d90b22; color: #ffffff; min-height: 44px; font-size: 12px; font-weight: 700; padding: 10px; }
 .full-width { width: 100%; }
 .connection-hint { color: #aaaaaa; text-align: center; font-size: 11px; margin-top: 10px; }
 select { max-width: 100%; background: #292929; color: #f7f7f7; border: 1px solid #555555; border-radius: 6px; padding: 6px; font-size: 12px; }
@@ -72,5 +72,5 @@ summary { cursor: pointer; }
 @media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
 @media (max-width: 400px) { main { padding: 16px; } .panel { padding: 15px; } .compact-title h1 { font-size: 13px; } }
 
-.primary:not(:disabled):hover { background: #df1426; }
+.primary:not(:disabled):hover { background: #b9081b; }
 .choose-release:not(:disabled):hover, .icon-button:not(:disabled):hover { background: #404040; }
