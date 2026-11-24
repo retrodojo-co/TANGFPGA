@@ -48,6 +48,7 @@ jobs:
         if: runner.os == 'macOS'
         run: brew install libftdi libusb hidapi pkg-config cmake
       - uses: msys2/setup-msys2@v2
+        id: msys2
         if: runner.os == 'Windows'
         with:
           msystem: UCRT64
@@ -72,9 +73,11 @@ jobs:
           cmake --build ../.programmer-build --parallel 3
       - name: Stage FPGA programmer (Windows)
         if: runner.os == 'Windows'
+        env:
+          MSYS2_LOCATION: ${{ steps.msys2.outputs.msys2-location }}
         shell: pwsh
         run: |
-          $env:PATH = "C:\msys64\ucrt64\bin;" + $env:PATH
+          $env:PATH = (Join-Path $env:MSYS2_LOCATION 'ucrt64/bin') + ';' + $env:PATH
           python scripts/stage_programmer.py ../.programmer-build/openFPGALoader.exe --license ../.programmer-source/LICENSE
       - name: Include programmer corresponding source
         run: python -c "import pathlib,subprocess; subprocess.run(['git','-C','../.programmer-source','archive','--format=tar.gz','-o',str(pathlib.Path('src-tauri/resources/programmer/openFPGALoader-source.tar.gz').resolve()),'HEAD'],check=True)"

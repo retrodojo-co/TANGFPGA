@@ -97,7 +97,7 @@ def main():
     for index, notice in enumerate(args.notices):
         shutil.copy2(notice, licenses / f'{index}-{notice.parent.name}-{notice.name}')
     license_roots = ([Path('/opt/homebrew/opt/hidapi'), Path('/opt/homebrew/opt/libusb'), Path('/opt/homebrew/opt/libftdi')]
-                     if sys.platform == 'darwin' else [Path('C:/msys64/ucrt64/share/licenses')])
+                     if sys.platform == 'darwin' else [Path(os.environ.get('MSYS2_LOCATION','C:/msys64')) / 'ucrt64/share/licenses'])
     for license_root in license_roots:
         if not license_root.exists(): continue
         candidates = license_root.rglob('*') if sys.platform == 'win32' else license_root.glob('*')
@@ -112,6 +112,8 @@ def main():
     env = os.environ.copy()
     if sys.platform.startswith('linux'):
         env['LD_LIBRARY_PATH'] = str(dest)
+    if sys.platform == 'win32':
+        env['PATH'] = str(dest) + os.pathsep + str(Path(os.environ['WINDIR']) / 'System32')
     subprocess.run([str(target), '-V'], env=env, check=True)
     print(f'Staged {version} and {len(copied)-1} libraries. Review licenses before redistribution.')
 
