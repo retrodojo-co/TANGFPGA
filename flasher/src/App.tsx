@@ -11,7 +11,7 @@ import {
   X,
 } from "lucide-react";
 import { api, desktop } from "./api";
-import logo from "./assets/tangfpga.svg";
+import logo from "./assets/tangfpga.png";
 import {
   errorMessage,
   type Action,
@@ -196,7 +196,7 @@ export default function App() {
             <span className="pixel-cursor" aria-hidden="true">
               ▶
             </span>{" "}
-            FLASHER <span className="app-version">v0.1.0</span>
+            FLASHER <span className="app-version">v0.1.1</span>
           </div>
           <button
             className="icon-button"

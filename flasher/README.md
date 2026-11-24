@@ -1,7 +1,7 @@
-# TangFPGA Flasher 0.1.0
+# TangFPGA Flasher 0.1.1
 
 A TangFPGA-branded desktop fork of NANOBLAST Flasher 0.2.0, with a dedicated
-app identity (`co.retrodojo.tangfpga.flasher`), mint/slate interface and native icons.
+app identity (`co.retrodojo.tangfpga.flasher`), black/red interface with the supplied TangFPGA logo and native icons.
 The original NANOBLAST app, backups and preferences are independent.
 
 ## Supported firmware and connection

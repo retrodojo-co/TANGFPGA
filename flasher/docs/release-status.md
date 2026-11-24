@@ -1,3 +1,9 @@
+# TangFPGA Flasher 0.1.1 branding update
+
+Uses the supplied white/red TangFPGA wordmark with RGB stripes, a black/red
+interface, and matching desktop icons. Firmware update behavior is unchanged.
+Mac and Windows installer builds are being refreshed.
+
 # TangFPGA Flasher 0.1.0 release status
 
 Prepared 24 November 2026. Public release remains unpublished.
