@@ -2,7 +2,12 @@
 
 Uses the supplied white/red TangFPGA wordmark with RGB stripes, a black/red
 interface, and matching desktop icons. Firmware update behavior is unchanged.
-Mac and Windows installer builds are being refreshed.
+Both Mac Apple Silicon and Windows x64 installers passed the native build,
+test and packaging workflow: [run 45307154228](https://github.com/retrodojo-co/TANGFPGA/actions/runs/45307154228).
+The Mac ad-hoc signature, DMG integrity, version and bundled helper checksum
+were also verified locally. Hardware testing remains pending.
+
+Version 0.1.1 packages and checksums are in `artifacts/release/v0.1.1/`.
 
 # TangFPGA Flasher 0.1.0 release status
 
