@@ -25,3 +25,7 @@ for source in files:
     digest = hashlib.sha256(dest.read_bytes()).hexdigest()
     (out / (name + '.sha256')).write_text(f'{digest}  {name}\n')
     print(dest)
+
+# Keep the upstream MIT notice with every installer distribution.
+shutil.copy2(root / 'LICENSE', out / 'LICENSE.txt')
+shutil.copy2(root / 'README.md', out / 'BUILD-AND-USAGE.md')

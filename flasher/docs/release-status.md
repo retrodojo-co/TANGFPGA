@@ -5,7 +5,7 @@ Prepared 24 November 2026. Public release remains unpublished.
 | Platform | State |
 | --- | --- |
 | Mac Apple Silicon | `.app` and `.dmg` built locally. Ad-hoc signature, disk-image integrity, app identifier/version and bundled helper SHA-256 verified. Not notarized. |
-| Windows x64 | Native NSIS build configured in GitHub Actions and `scripts/build_windows.ps1`. Build result pending. |
+| Windows x64 | Native NSIS installer built on Windows 2022. Windows x64 app/helper PE architecture and helper SHA-256 checks passed. Installer UI and hardware testing remain pending. |
 | Intel Mac / Windows ARM64 | Not included in this version. |
 
 Local validation: TypeScript/Vite production build, seven frontend simulation
@@ -17,6 +17,8 @@ No physical flashing has been performed for this fork. Windows install/uninstall
 and USB/driver behavior require testing on a Windows machine. Firmware support
 remains the inherited 20K BL616/NBCRXZ01 layout with all four console cores.
 9K, 60K and alternate Arcade layouts are not added by this branding change.
+
+Both native jobs passed in [GitHub Actions run 45304547725](https://github.com/retrodojo-co/TANGFPGA/actions/runs/45304547725).
 
 Generated installers and checksums are staged in ignored `artifacts/release/`.
 A Windows source/build kit is not a prebuilt Windows installer.
