@@ -61,7 +61,7 @@ jobs:
       - name: Build FPGA programmer (Mac)
         if: runner.os == 'macOS'
         run: |
-          cmake -S ../.programmer-source -B ../.programmer-build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
+          cmake -S ../.programmer-source -B ../.programmer-build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 -DBUILD_TESTING=OFF
           cmake --build ../.programmer-build --parallel 3
           python scripts/stage_programmer.py ../.programmer-build/openFPGALoader --license ../.programmer-source/LICENSE --notices /opt/homebrew/opt/libusb/COPYING --notices /opt/homebrew/opt/libftdi/COPYING.LIB
       - name: Build FPGA programmer (Windows)

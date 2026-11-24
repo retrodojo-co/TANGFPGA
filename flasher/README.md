@@ -123,3 +123,7 @@ The bundled Nano 20K programmer firmware is an unmodified Sipeed vendor image,
 with its URL, version and SHA-256 in `resources/installer/SOURCE.json`; it is not
 MIT-licensed flasher code. The FPGA programmer carries its upstream GPL licence,
 corresponding-source archive and dependency notices in `resources/programmer/`.
+
+The Mac 0.3.0 release requires Apple Silicon and macOS 15 or newer, matching
+the bundled native programmer and USB libraries. The programmer executable is
+checked before the first setup write.

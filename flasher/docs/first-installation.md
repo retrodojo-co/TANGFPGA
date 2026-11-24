@@ -51,3 +51,7 @@ This release pins Nano 20K programmer **2025030317**, SHA-256
 FPGA access uses a pinned [openFPGALoader](https://github.com/trabucayre/openFPGALoader/tree/3c52ab1487ff759e1a3790346455ec7e92ba8c44)
 build, with explicit device selection and complete readback in addition to
 its write verification.
+
+The Mac 0.3.0 release requires Apple Silicon and macOS 15 or newer, matching
+the bundled native programmer and USB libraries. The programmer executable is
+checked before the first setup write.

@@ -40,6 +40,7 @@ class Install(unittest.TestCase):
 
     def cli(self,exe,args):
         self.commands.append(args)
+        if args==['-V']:return 'openFPGALoader test'
         assert '--busdev-num' in args and args[args.index('--busdev-num')+1]=='1:2' and '--external-flash' in args
         assert '--bulk-erase' not in args and '--unprotect-flash' not in args
         if '--detect' in args:return 'Gowin GW2A(R)-18(C)\nJEDEC ID: 0xef4017'
@@ -52,7 +53,7 @@ class Install(unittest.TestCase):
 
     def stages(self,args):
         original_mcu=bytes(self.mcu);original_fpga=bytes(self.fpga)
-        prepared=s.prepare(args,self.Primary)
+        prepared=s.prepare(args,self.Primary,self.cli)
         self.assertEqual(self.mcu[0x40000:],original_mcu[0x40000:])
         self.assertEqual((args.output/'before-full-flash.bin').read_bytes(),original_mcu)
         args.request=args.output/'system-install.json';args.confirmation='FPGA NANO20K 1:2'
@@ -95,11 +96,11 @@ class Install(unittest.TestCase):
 
     def test_confirmation_prevents_first_mutation(self):
         a=self.args(self.bundle,'arcade');a.confirmation='UPDATE TEST';before=bytes(self.mcu)
-        with self.assertRaises(ValueError):s.prepare(a,self.Primary)
+        with self.assertRaises(ValueError):s.prepare(a,self.Primary,self.cli)
         self.assertEqual(self.mcu,before);self.assertFalse(a.output.exists())
 
     def test_wrong_fpga_and_incomplete_backup_prevent_programming(self):
-        a=self.args(self.bundle,'arcade');s.prepare(a,self.Primary);a.request=a.output/'system-install.json';a.confirmation='FPGA NANO20K 1:2'
+        a=self.args(self.bundle,'arcade');s.prepare(a,self.Primary,self.cli);a.request=a.output/'system-install.json';a.confirmation='FPGA NANO20K 1:2'
         with self.assertRaises(ValueError):s.fpga(a,lambda exe,args:'GW5A-60\nJEDEC ID: 0xef4017')
         self.assertEqual(self.fpga,b'\x5a'*s.FPGA_SIZE)
         def short(exe,args):
@@ -109,14 +110,14 @@ class Install(unittest.TestCase):
         self.assertEqual(self.fpga,b'\x5a'*s.FPGA_SIZE)
 
     def test_final_step_requires_verified_fpga_and_same_board(self):
-        a=self.args(self.bundle,'arcade');s.prepare(a,self.Primary);a.request=a.output/'system-install.json';a.confirmation='FINISH ARCADE NANO20K TEST'
+        a=self.args(self.bundle,'arcade');s.prepare(a,self.Primary,self.cli);a.request=a.output/'system-install.json';a.confirmation='FINISH ARCADE NANO20K TEST'
         with self.assertRaises(ValueError):s.finish(a,self.Controller)
         a.confirmation='FPGA NANO20K 1:2';s.fpga(a,self.cli)
         a.confirmation='FINISH ARCADE NANO20K TEST';a.identity=json.dumps(['TEST',13467,24928,'other-board','slot'])
         with self.assertRaises(ValueError):s.finish(a,self.Controller)
 
     def test_corrupt_readback_does_not_advance_installation(self):
-        a=self.args(self.bundle,'arcade');s.prepare(a,self.Primary);a.request=a.output/'system-install.json';a.confirmation='FPGA NANO20K 1:2'
+        a=self.args(self.bundle,'arcade');s.prepare(a,self.Primary,self.cli);a.request=a.output/'system-install.json';a.confirmation='FPGA NANO20K 1:2'
         reads=0
         def corrupt(exe,args):
             nonlocal reads

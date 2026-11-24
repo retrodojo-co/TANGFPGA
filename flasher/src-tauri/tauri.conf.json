@@ -42,7 +42,7 @@
     "category": "Utility",
     "shortDescription": "Update TangFPGA BL616 firmware and cores",
     "macOS": {
-      "minimumSystemVersion": "11.0",
+      "minimumSystemVersion": "15.0",
       "signingIdentity": "-"
     },
     "icon": [

@@ -76,12 +76,15 @@ def request(path):
     return path,m,image
 
 
-def prepare(args,transport_class=PrimaryTransport):
+def prepare(args,transport_class=PrimaryTransport,run_command=None):
     u.require(args.release and args.current_bundle and args.output and args.port and args.identity,'Missing first-install selection')
     kind,version,image,_=profile(args.current_bundle,args.release)
     u.require(args.confirmation==f'INSTALL {kind.upper()} NANO20K {args.port}','Explicit Nano 20K installation confirmation required')
     u.check_port(args.port,args.identity)
     bootloader=primary(args.release.parent)
+    executable=loader(args.release.parent)
+    info=(run_command or command)(executable,['-V'])
+    u.require('openFPGALoader' in info,'Bundled FPGA programmer is unavailable; no flash was changed')
     args.output.mkdir(parents=True,exist_ok=False)
     selected=release_files.select(args.current_bundle,args.output/'selected',args.release)
     kind,version,image,_=profile(Path(selected['path']),args.release)
