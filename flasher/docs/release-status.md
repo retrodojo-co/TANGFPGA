@@ -11,7 +11,9 @@ tests, and 46 Python tests pass. Synthetic two-chip tests cover blank → consol
 blank → Arcade → console → Arcade, protected regions, exact write bounds,
 confirmation gates, wrong devices, partial backups, mismatched controller
 serials and corrupted readback. The browser completes all three stages without
-hardware access. Native installers are being rebuilt.
+hardware access. Native Mac and Windows builds both pass in [run 45436585725](https://github.com/retrodojo-co/TANGFPGA/actions/runs/45436585725). Both installer SHA-256 checksums match. The Mac package passes signature, version/minimum-OS and bundled helper/programmer hash checks; its frozen helper validates both actual console and local Arcade first-install profiles without accessing hardware. Windows packaging verifies x64 executable architecture, hashes and standalone programmer startup without the MSYS2 build tools in PATH.
+
+Version 0.3.0 release packages and checksums are in `artifacts/release/v0.3.0/`.
 
 Hardware boot/first-install/conversion tests and Windows install/uninstall tests
 remain pending. This release is a prerelease candidate; Mac is ad-hoc signed and
