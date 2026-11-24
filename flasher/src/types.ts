@@ -54,6 +54,9 @@ export interface NanoRelease {
   experimental_cores: string[];
 }
 export interface SelectedRelease {
+  kind?: "arcade" | "console";
+  video_images?: number;
+  hardware_tested?: boolean;
   version: string;
   path: string;
   source: string;

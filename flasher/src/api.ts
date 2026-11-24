@@ -53,13 +53,16 @@ export class Simulator {
       if (action.path !== "SIMULATION-RELEASE")
         throw new Error("Preview cannot read actual release files.");
       this.selectedRelease = {
-        version: "Demo release",
+        version: this.scenario === "arcade" ? "Demo Arcade release" : "Demo release",
+        kind: this.scenario === "arcade" ? "arcade" : "console",
+        video_images: this.scenario === "arcade" ? 9 : undefined,
+        hardware_tested: false,
         path: "SIMULATION",
         source: "Demo-release.zip",
         bytes: 667424,
         sha256: "0".repeat(64),
-        cores: 4,
-        layout: "BL616 / NBCRXZ01",
+        cores: this.scenario === "arcade" ? 0 : 4,
+        layout: this.scenario === "arcade" ? "Arcade V1 / application only" : "BL616 / NBCRXZ01",
       };
       return this.selectedRelease;
     }

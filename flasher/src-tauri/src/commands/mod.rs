@@ -404,7 +404,7 @@ fn execute(state: &State, action: Action, app: &tauri::AppHandle) -> Result<Valu
                 Some(&selected_path),
             )?;
             Ok(
-                json!({"message":"Firmware and all four cores verified. Disconnect every USB and power cable for 5 seconds, then reconnect without UPDATE and select a core.", "backup":backup.to_string_lossy()}),
+                json!({"message": if selected["kind"] == "arcade" { "Arcade application verified. The primary programmer and FPGA recovery cache were preserved. Disconnect power, insert the prepared SD card, reconnect HDMI and power on without UPDATE." } else { "Firmware and all four cores verified. Disconnect every USB and power cable for 5 seconds, then reconnect without UPDATE and select a core." }, "backup":backup.to_string_lossy()}),
             )
         }
         Action::InstallDevelopmentMenu {

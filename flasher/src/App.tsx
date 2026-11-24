@@ -132,6 +132,7 @@ export default function App() {
   };
   const locked = busy || scanning || choosing;
   const simulation = snapshot?.simulation ?? !desktop;
+  const arcade = snapshot?.setup_firmware?.kind === "arcade";
   const selectRelease = async (folder = false) => {
     if (busyRef.current || scanRef.current || choosingRef.current) return;
     choosingRef.current = true;
@@ -170,7 +171,7 @@ export default function App() {
         identity: firmwarePort.identity,
         confirmation: `UPDATE ${firmwarePort.port}`,
       },
-      "Install firmware and cores",
+      arcade ? "Install Arcade application" : "Install firmware and cores",
     );
     if (result && typeof result === "object") {
       setInstalled(true);
@@ -196,7 +197,7 @@ export default function App() {
             <span className="pixel-cursor" aria-hidden="true">
               ▶
             </span>{" "}
-            FLASHER <span className="app-version">v0.1.1</span>
+            FLASHER <span className="app-version">v0.2.0</span>
           </div>
           <button
             className="icon-button"
@@ -227,6 +228,7 @@ export default function App() {
               <option value="connected">UPDATE</option>
               <option value="disconnected">Offline</option>
               <option value="failure">Failure</option>
+              <option value="arcade">Arcade</option>
             </select>
           </div>
         )}
@@ -262,12 +264,16 @@ export default function App() {
           >
             <div className="compact-title">
               <CircuitBoard size={19} />
-              <h1 id="firmware-title">Firmware & cores</h1>
+              <h1 id="firmware-title">{arcade ? "Arcade application" : "Firmware & cores"}</h1>
               <span className="mini-tag">
                 {snapshot?.setup_firmware ? "Selected" : "Release file"}
               </span>
             </div>
-            <p className="hardware-scope">20K · BL616 UPDATE<br />Use a compatible NBCRXZ01 firmware release.</p>
+            <p className="hardware-scope">20K · BL616 UPDATE<br />
+              {arcade
+                ? "Application only · existing Arcade installation required. Remove SD card and disconnect HDMI before updating."
+                : "Choose a console or Arcade System release."}
+            </p>
             <div className="release-picker">
               <button
                 className="choose-release"
@@ -300,6 +306,12 @@ export default function App() {
                 "Select a downloaded ZIP or release manifest"
               )}
             </p>
+            {arcade && (
+              <p className="release-warning">
+                Recovery cache preserved. Copy the release’s SD-card files separately.
+                {snapshot?.setup_firmware?.hardware_tested === false && " Hardware validation pending for this release."}
+              </p>
+            )}
             {updatePorts.length > 1 && (
               <select
                 aria-label="Console to update"
@@ -335,7 +347,7 @@ export default function App() {
               ) : (
                 <ArrowDownToLine size={17} />
               )}
-              Flash firmware & cores
+              {arcade ? "Flash Arcade application" : "Flash firmware & cores"}
             </button>
             {!firmwarePort && (
               <p className="connection-hint">UPDATE mode required</p>
@@ -350,7 +362,9 @@ export default function App() {
                   <p>
                     {simulation
                       ? "No hardware or files were modified."
-                      : "Unplug all USB and power for 5 seconds. Reconnect, then select a core."}
+                      : arcade
+                        ? "Unplug all USB and power. Insert the prepared SD card, reconnect HDMI and power on without UPDATE."
+                        : "Unplug all USB and power for 5 seconds. Reconnect, then select a core."}
                   </p>
                   {backup && (
                     <details>

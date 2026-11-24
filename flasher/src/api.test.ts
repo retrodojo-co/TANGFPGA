@@ -19,6 +19,12 @@ describe("firmware-only flasher", () => {
     expect(await sim.perform({ type: "list_menu_ports" })).toEqual([]);
     await expect(sim.perform(update)).rejects.toThrow("disconnected");
   });
+  it("distinguishes Arcade application-only releases in preview", async () => {
+    const sim = new Simulator();
+    await sim.perform({type: "simulate", scenario: "arcade"});
+    await choose(sim);
+    expect(sim.snapshot().setup_firmware).toMatchObject({kind: "arcade", cores: 0, video_images: 9, hardware_tested: false});
+  });
   it("requires exact device confirmation", async () => {
     const sim = new Simulator(); await choose(sim);
     await expect(sim.perform({ ...update, confirmation: "yes" })).rejects.toThrow("confirmation");

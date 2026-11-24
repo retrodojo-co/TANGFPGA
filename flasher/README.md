@@ -1,4 +1,4 @@
-# TangFPGA Flasher 0.1.1
+# TangFPGA Flasher 0.2.0
 
 A TangFPGA-branded desktop fork of NANOBLAST Flasher 0.2.0, with a dedicated
 app identity (`co.retrodojo.tangfpga.flasher`), black/red interface with the supplied TangFPGA logo and native icons.
@@ -6,23 +6,44 @@ The original NANOBLAST app, backups and preferences are independent.
 
 ## Supported firmware and connection
 
-This version preserves the upstream **20K BL616 UPDATE / NBCRXZ01** updater.
-It accepts a compatible downloaded release ZIP, extracted release folder or
-JSON manifest containing a menu and the four matching NES, SMS/GG, GB/GBC and
-experimental SNES cores. It checks file lengths, checksums, core headers and
-flash layout before writing, saves a full backup, and verifies readback.
+The app detects two release formats automatically:
 
-The TangFPGA name does not add Nano 9K, Console 60K, direct JTAG, raw `.fs`
-or alternate Arcade flash-layout support. Use the exact firmware package and
-connection procedure specified for your hardware. Unsupported packages are
-rejected. No new firmware is bundled for automatic installation.
+| Release | Programming behavior |
+| --- | --- |
+| Console `manifest.json` / NBCRXZ01 | Existing menu and four matching console cores, with the inherited layout validation |
+| Arcade `release.json` / TANGFPGA_ARCADE_V1 | BL616 application only, preserving the primary programmer, FPGA recovery cache and every byte outside `0x40000–0xE8000` |
+
+Arcade updates require an **existing compatible Arcade installation** and a
+valid **protocol-28 recovery cache** matching one of the selected release's
+video/reference images. They cannot initialize a blank board or convert a
+console installation into Arcade. The UI identifies Arcade releases and shows
+the application-only action and SD-card instructions. Unvalidated release
+candidates are identified explicitly.
+
+Choose a complete release ZIP, extracted folder, or its exact JSON manifest.
+Every required firmware/video file is checked by size and SHA-256, and the BL616
+firmware header and payload are validated. A full 4 MiB backup is retained
+before any write; the complete flash is read back and compared with the plan.
+Unknown applications, invalid cache data and incompatible markers stop before
+writing. Separate verified-application receipts permit later Arcade updates.
+
+ZIP selection copies only manifest-declared firmware and video/reference images
+into the app's private cache. Game files, source archives and release-supplied
+Python scripts are neither extracted nor executed. Files in a private release
+stay local. The flasher does not copy SD-card files or install FPGA images from
+the package; prepare the card separately following its release notes.
+
+Nano 9K, Console 60K, direct JTAG and raw `.fs` flashing remain unsupported.
 
 1. Download a firmware release that explicitly supports this updater/layout.
-2. Connect the supported console in BL616 UPDATE mode as described by its
+2. For Arcade, power off, remove the SD card and disconnect HDMI first.
+   Connect the supported console in BL616 UPDATE mode as described by its
    hardware instructions. Select the correct port if several are present.
-3. Choose the release and click **Flash firmware & cores**.
+3. Choose the release. Check whether the app shows a console or Arcade update,
+   then click **Flash firmware & cores** or **Flash Arcade application**.
 4. Keep power connected throughout backup, writing and verification.
-5. After success, disconnect every USB/power cable for five seconds and reconnect.
+5. After success, disconnect every USB/power cable for five seconds. For Arcade,
+   insert the prepared SD card and reconnect video, then power on without UPDATE.
 
 Backups and verified-layout receipts live in the app data folder. On macOS:
 `~/Library/Application Support/co.retrodojo.tangfpga.flasher/`; on Windows:

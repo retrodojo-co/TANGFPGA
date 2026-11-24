@@ -1,3 +1,17 @@
+# TangFPGA Flasher 0.2.0 — Arcade support
+
+Adds automatic `TANGFPGA_ARCADE_V1` package detection and application-only updates
+for an existing Tang Nano 20K + BL616 Arcade installation. Protocol-28 recovery
+cache validation is required; no blank-board bootstrap or console-to-Arcade
+conversion is performed. SD-card files must be installed separately.
+
+Validation in progress: eight frontend tests, 38 Python tests and production
+frontend build pass. Local r16 folder/manifest and private r17 folder/ZIP selection
+and write plans match their respective reference updaters exactly, using synthetic
+flash captures with the real reference images. No private ROM data or captures
+are included in source or installer distributions. Physical flashing remains
+untested. Native Mac and Windows builds are being refreshed.
+
 # TangFPGA Flasher 0.1.1 branding update
 
 Uses the supplied white/red TangFPGA wordmark with RGB stripes, a black/red
