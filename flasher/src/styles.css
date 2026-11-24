@@ -74,3 +74,11 @@ summary { cursor: pointer; }
 
 .primary:not(:disabled):hover { background: #b9081b; }
 .choose-release:not(:disabled):hover, .icon-button:not(:disabled):hover { background: #404040; }
+
+.release-warning { color: #ffd78b; font-size: 11px; line-height: 1.6; margin: 0 0 14px; }
+
+.install-mode { display: flex; flex-direction: column; gap: 6px; margin-top: 16px; color: #b5b5b5; font-size: 11px; }
+.install-confirm { display: flex; align-items: flex-start; gap: 9px; font-size: 11px; line-height: 1.6; color: #ffd78b; margin: 14px 0; }
+.install-confirm input { margin-top: 4px; accent-color: #d90b22; flex-shrink: 0; }
+.backup-path { margin-top: 18px; color: #b5b5b5; font-size: 11px; }
+.backup-path code { display: block; overflow-wrap: anywhere; font-size: 10px; margin-top: 8px; }

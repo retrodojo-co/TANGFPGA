@@ -58,7 +58,7 @@ See [licensing](LICENSE) for the scope of this documentation repository.
 ## TangFPGA Flasher
 
 The [TangFPGA Flasher](flasher/README.md) desktop app is based on NANOBLAST
-Flasher, with Mac Apple Silicon and Windows x64 packaging. This first version
-supports the inherited 20K BL616 UPDATE layout; 9K, 60K and alternate Arcade
-layouts require separate support. See its [release status](flasher/docs/release-status.md)
+Flasher, with Mac Apple Silicon and Windows x64 packaging. Version 0.3.0
+supports console and Arcade updates, first installation and switching between
+them on Tang Nano 20K. 9K and 60K require separate support. See its [release status](flasher/docs/release-status.md)
 for available installers and validation limits.

@@ -6,7 +6,9 @@
     ],
     "resources": [
       "resources/bl616/",
-      "resources/nanoblast-v0.2.0/"
+      "resources/nanoblast-v0.2.0/",
+      "resources/installer/",
+      "resources/programmer/"
     ],
     "windows": {
       "webviewInstallMode": {

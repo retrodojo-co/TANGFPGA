@@ -44,6 +44,43 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: flasher/src-tauri
+      - name: macOS programmer dependencies
+        if: runner.os == 'macOS'
+        run: brew install libftdi libusb hidapi pkg-config cmake
+      - uses: msys2/setup-msys2@v2
+        id: msys2
+        if: runner.os == 'Windows'
+        with:
+          msystem: UCRT64
+          update: true
+          install: mingw-w64-ucrt-x86_64-toolchain mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-ninja mingw-w64-ucrt-x86_64-pkgconf mingw-w64-ucrt-x86_64-libusb mingw-w64-ucrt-x86_64-libftdi mingw-w64-ucrt-x86_64-hidapi mingw-w64-ucrt-x86_64-zlib
+      - uses: actions/checkout@v4
+        with:
+          repository: trabucayre/openFPGALoader
+          ref: 3c52ab1487ff759e1a3790346455ec7e92ba8c44
+          path: .programmer-source
+      - name: Build FPGA programmer (Mac)
+        if: runner.os == 'macOS'
+        run: |
+          cmake -S ../.programmer-source -B ../.programmer-build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 -DBUILD_TESTING=OFF
+          cmake --build ../.programmer-build --parallel 3
+          python scripts/stage_programmer.py ../.programmer-build/openFPGALoader --license ../.programmer-source/LICENSE --notices /opt/homebrew/opt/libusb/COPYING --notices /opt/homebrew/opt/libftdi/COPYING.LIB
+      - name: Build FPGA programmer (Windows)
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
+        run: |
+          cmake -S ../.programmer-source -B ../.programmer-build -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
+          cmake --build ../.programmer-build --parallel 3
+      - name: Stage FPGA programmer (Windows)
+        if: runner.os == 'Windows'
+        env:
+          MSYS2_LOCATION: ${{ steps.msys2.outputs.msys2-location }}
+        shell: pwsh
+        run: |
+          $env:PATH = (Join-Path $env:MSYS2_LOCATION 'ucrt64/bin') + ';' + $env:PATH
+          python scripts/stage_programmer.py ../.programmer-build/openFPGALoader.exe --license ../.programmer-source/LICENSE
+      - name: Include programmer corresponding source
+        run: python -c "import pathlib,subprocess; subprocess.run(['git','-C','../.programmer-source','archive','--format=tar.gz','-o',str(pathlib.Path('src-tauri/resources/programmer/openFPGALoader-source.tar.gz').resolve()),'HEAD'],check=True)"
       - name: Stage native BL616 helper
         run: |
           python -m pip install -r scripts/requirements-bl616.txt

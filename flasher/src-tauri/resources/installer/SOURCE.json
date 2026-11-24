@@ -1,0 +1,10 @@
+{
+  "vendor": "Sipeed",
+  "board": "Tang Nano 20K",
+  "version": "2025030317",
+  "url": "https://api.dl.sipeed.com/TANG/Debugger/onboard/BL616/2025030317/bl616_fpga_partner_20kNano.bin",
+  "sha256": "bc5b1f733a13562c898ff66b540038c116c3d77ca202d0afebd1e7af1c3b3203",
+  "bytes": 90672,
+  "notice": "Unmodified Sipeed vendor programmer firmware. Vendor rights and terms apply; not covered by the flasher MIT licence.",
+  "documentation": "https://wiki.sipeed.com/hardware/en/tang/common-doc/update_debugger"
+}

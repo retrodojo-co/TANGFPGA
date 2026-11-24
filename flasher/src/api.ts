@@ -6,11 +6,13 @@ import type {
   OperationEvent,
   Snapshot,
   SelectedRelease,
+  PendingInstall,
 } from "./types";
 export const desktop = isTauri();
 type Listener = (event: OperationEvent) => void;
 export class Simulator {
   scenario = "connected";
+  private pending: PendingInstall | null = null;
   private listeners = new Set<Listener>();
   private running = false;
   private selectedRelease: SelectedRelease | null = null;
@@ -26,6 +28,7 @@ export class Simulator {
   }
   snapshot(): Snapshot {
     return {
+      pending_install: this.pending,
       simulation: true,
       nanoblast: null,
       setup_firmware: this.selectedRelease,
@@ -49,17 +52,42 @@ export class Simulator {
       this.scenario = action.scenario;
       return null;
     }
+    if (action.type === "prepare_system") {
+      if (this.pending) throw new Error("Finish the pending installation first.");
+      if (!this.selectedRelease) throw new Error("Choose a system release first.");
+      const target = this.selectedRelease.kind === "arcade" ? "arcade" : "console";
+      if (action.confirmation !== `INSTALL ${target.toUpperCase()} NANO20K ${action.port}`) throw new Error("Explicit Nano 20K installation confirmation required.");
+      if (this.scenario === "disconnected") throw new Error("Simulated device disconnected.");
+      this.pending = {target, version: this.selectedRelease.version, phase: "primary_verified", backup: "SIMULATION · no files written"};
+      return this.pending;
+    }
+    if (action.type === "list_install_programmers") return this.pending && this.scenario !== "disconnected" ? [{id:"sim:fpga",serial:"SIMULATION",description:"Nano 20K programmer · simulated",accessible:true,identification:"Preview"}] : [];
+    if (action.type === "program_system_fpga") {
+      if (!this.pending || !["primary_verified","fpga_pending"].includes(this.pending.phase)) throw new Error("FPGA programming is not pending.");
+      if (action.confirmation !== `FPGA NANO20K ${action.device_id}`) throw new Error("Explicit FPGA confirmation required.");
+      if (this.scenario === "disconnected") throw new Error("Simulated device disconnected.");
+      this.pending = {...this.pending, phase: "fpga_verified"}; return this.pending;
+    }
+    if (action.type === "finish_system") {
+      if (this.pending?.phase !== "fpga_verified") throw new Error("FPGA verification is required first.");
+      if (action.confirmation !== `FINISH ${this.pending.target.toUpperCase()} NANO20K ${action.port}`) throw new Error("Explicit final installation confirmation required.");
+      if (this.scenario === "disconnected") throw new Error("Simulated device disconnected.");
+      const result = {phase:"complete",target:this.pending.target,backup:"SIMULATION · no files written"}; this.pending=null; return result;
+    }
     if (action.type === "select_setup_release") {
       if (action.path !== "SIMULATION-RELEASE")
         throw new Error("Preview cannot read actual release files.");
       this.selectedRelease = {
-        version: "Demo release",
+        version: this.scenario === "arcade" ? "Demo Arcade release" : "Demo release",
+        kind: this.scenario === "arcade" ? "arcade" : "console",
+        video_images: this.scenario === "arcade" ? 9 : undefined,
+        hardware_tested: false,
         path: "SIMULATION",
         source: "Demo-release.zip",
         bytes: 667424,
         sha256: "0".repeat(64),
-        cores: 4,
-        layout: "BL616 / NBCRXZ01",
+        cores: this.scenario === "arcade" ? 0 : 4,
+        layout: this.scenario === "arcade" ? "Arcade V1 / application only" : "BL616 / NBCRXZ01",
       };
       return this.selectedRelease;
     }

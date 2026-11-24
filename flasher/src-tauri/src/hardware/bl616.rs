@@ -200,3 +200,10 @@ pub fn files(
         .ok_or_else(|| invalid("USB file helper returned no result"))?;
     Ok(serde_json::from_str(line)?)
 }
+
+pub fn system_step(resources: &Path, args: &[String], report: Reporter) -> Result<serde_json::Value> {
+    let text = NativeRunner.run(&helper(resources)?, args, report)?;
+    let line = text.lines().rev().find_map(|line| line.strip_prefix("RESULT "))
+        .ok_or_else(|| invalid("Installation helper returned no verified result"))?;
+    Ok(serde_json::from_str(line)?)
+}

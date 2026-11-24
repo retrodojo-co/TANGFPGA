@@ -1,4 +1,4 @@
-# TangFPGA Flasher 0.1.1
+# TangFPGA Flasher 0.3.0
 
 A TangFPGA-branded desktop fork of NANOBLAST Flasher 0.2.0, with a dedicated
 app identity (`co.retrodojo.tangfpga.flasher`), black/red interface with the supplied TangFPGA logo and native icons.
@@ -6,23 +6,51 @@ The original NANOBLAST app, backups and preferences are independent.
 
 ## Supported firmware and connection
 
-This version preserves the upstream **20K BL616 UPDATE / NBCRXZ01** updater.
-It accepts a compatible downloaded release ZIP, extracted release folder or
-JSON manifest containing a menu and the four matching NES, SMS/GG, GB/GBC and
-experimental SNES cores. It checks file lengths, checksums, core headers and
-flash layout before writing, saves a full backup, and verifies readback.
+The app detects two release formats automatically:
 
-The TangFPGA name does not add Nano 9K, Console 60K, direct JTAG, raw `.fs`
-or alternate Arcade flash-layout support. Use the exact firmware package and
-connection procedure specified for your hardware. Unsupported packages are
-rejected. No new firmware is bundled for automatic installation.
+| Release | Programming behavior |
+| --- | --- |
+| Console `manifest.json` / NBCRXZ01 | Existing menu and four matching console cores, with the inherited layout validation |
+| Arcade `release.json` / TANGFPGA_ARCADE_V1 | BL616 application only, preserving the primary programmer, FPGA recovery cache and every byte outside `0x40000–0xE8000` |
+
+**Update existing system** retains the conservative update-only checks.
+**First install / switch system** supports a factory/empty user-flash Nano 20K,
+console → Arcade and Arcade → console. It deliberately replaces the selected
+system after confirmation and backs up both flash chips. See the
+[first-installation guide](docs/first-installation.md).
+
+The guided setup has three steps: prepare the BL616 programmer in UPDATE mode,
+reconnect normally to back up/program/verify the FPGA boot flash, then return to
+UPDATE mode to install and verify the controller application and system data.
+It installs the pinned, board-specific Sipeed Nano 20K secondary-boot programmer.
+The pending installation persists across app restarts between completed steps.
+
+Choose a complete release ZIP, extracted folder, or its exact JSON manifest.
+Every required firmware/video file is checked by size and SHA-256, and the BL616
+firmware header and payload are validated. A full 4 MiB backup is retained
+before any write; the complete flash is read back and compared with the plan.
+Unknown applications, invalid cache data and incompatible markers stop before
+writing. Separate verified-application receipts permit later Arcade updates.
+
+ZIP selection copies only manifest-declared firmware and video/reference images
+into the app's private cache. Game files, source archives and release-supplied
+Python scripts are neither extracted nor executed. Files in a private release
+stay local. The flasher does not copy SD-card files; prepare the card separately following
+the release notes. First-install mode uses the selected package’s CPS1 480p or
+NES image to provision the FPGA boot flash.
+
+Nano 9K, Console 60K and arbitrary raw `.fs` flashing remain unsupported.
+First-install mode targets Nano 20K / GW2A(R)-18 with Winbond 8 MiB FPGA flash.
 
 1. Download a firmware release that explicitly supports this updater/layout.
-2. Connect the supported console in BL616 UPDATE mode as described by its
+2. For Arcade, power off, remove the SD card and disconnect HDMI first.
+   Connect the supported console in BL616 UPDATE mode as described by its
    hardware instructions. Select the correct port if several are present.
-3. Choose the release and click **Flash firmware & cores**.
+3. Choose the release. Check whether the app shows a console or Arcade update,
+   then click **Flash firmware & cores** or **Flash Arcade application**.
 4. Keep power connected throughout backup, writing and verification.
-5. After success, disconnect every USB/power cable for five seconds and reconnect.
+5. After success, disconnect every USB/power cable for five seconds. For Arcade,
+   insert the prepared SD card and reconnect video, then power on without UPDATE.
 
 Backups and verified-layout receipts live in the app data folder. On macOS:
 `~/Library/Application Support/co.retrodojo.tangfpga.flasher/`; on Windows:
@@ -46,11 +74,18 @@ bootstrapper is embedded; its initial runtime installation may need Internet.
 Run `python scripts/collect_release.py --target x86_64-pc-windows-msvc` to
 collect the installer and checksum.
 
-On an Apple Silicon Mac:
+On an Apple Silicon Mac, install CMake, libusb, libftdi and hidapi with Homebrew,
+then build and stage the pinned programmer before the Tauri build:
 
 ```sh
+git clone https://github.com/trabucayre/openFPGALoader.git .programmer-source
+git -C .programmer-source checkout 3c52ab1487ff759e1a3790346455ec7e92ba8c44
+cmake -S .programmer-source -B .programmer-build -DCMAKE_BUILD_TYPE=Release
+cmake --build .programmer-build --parallel 3
 python3.11 -m venv .build-venv
 .build-venv/bin/python -m pip install -r scripts/requirements-bl616.txt
+.build-venv/bin/python scripts/stage_programmer.py .programmer-build/openFPGALoader --license .programmer-source/LICENSE
+git -C .programmer-source archive --format=tar.gz -o ../src-tauri/resources/programmer/openFPGALoader-source.tar.gz HEAD
 .build-venv/bin/python scripts/stage_bl616.py
 npm ci
 npm run check
@@ -83,3 +118,12 @@ validation/recovery reference data, with their original GPL/per-file notices
 and corresponding source archive under `src-tauri/resources/nanoblast-v0.2.0/`.
 They are not installed without a manually selected release. Bundled Python
 helper dependencies retain their license inventory under resources/bl616.
+
+The bundled Nano 20K programmer firmware is an unmodified Sipeed vendor image,
+with its URL, version and SHA-256 in `resources/installer/SOURCE.json`; it is not
+MIT-licensed flasher code. The FPGA programmer carries its upstream GPL licence,
+corresponding-source archive and dependency notices in `resources/programmer/`.
+
+The Mac 0.3.0 release requires Apple Silicon and macOS 15 or newer, matching
+the bundled native programmer and USB libraries. The programmer executable is
+checked before the first setup write.

@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "TangFPGA Flasher",
-  "version": "0.1.1",
+  "version": "0.3.0",
   "identifier": "co.retrodojo.tangfpga.flasher",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -35,12 +35,14 @@
     "targets": "all",
     "resources": [
       "resources/bl616/",
-      "resources/nanoblast-v0.2.0/"
+      "resources/nanoblast-v0.2.0/",
+      "resources/installer/",
+      "resources/programmer/"
     ],
     "category": "Utility",
     "shortDescription": "Update TangFPGA BL616 firmware and cores",
     "macOS": {
-      "minimumSystemVersion": "11.0",
+      "minimumSystemVersion": "15.0",
       "signingIdentity": "-"
     },
     "icon": [

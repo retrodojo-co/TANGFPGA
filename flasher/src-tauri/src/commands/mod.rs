@@ -76,6 +76,7 @@ struct State {
 }
 #[derive(Clone, Serialize)]
 struct Snapshot {
+    pending_install: Option<Value>,
     simulation: bool,
     devices: Vec<ProgrammerDevice>,
     storage: Vec<StorageDevice>,
@@ -98,6 +99,10 @@ struct Event {
 #[derive(Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case", deny_unknown_fields)]
 enum FlasherAction {
+    PrepareSystem { port: String, identity: String, confirmation: String },
+    ListInstallProgrammers,
+    ProgramSystemFpga { device_id: String, serial: Option<String>, confirmation: String },
+    FinishSystem { port: String, identity: String, confirmation: String },
     SelectSetupRelease { path: String },
     InstallSetup { port: String, identity: String, confirmation: String },
     ListMenuPorts,
@@ -106,6 +111,10 @@ enum FlasherAction {
 impl From<FlasherAction> for Action {
     fn from(value: FlasherAction) -> Self {
         match value {
+            FlasherAction::PrepareSystem { port, identity, confirmation } => Self::PrepareSystem { port, identity, confirmation },
+            FlasherAction::ListInstallProgrammers => Self::ListInstallProgrammers,
+            FlasherAction::ProgramSystemFpga { device_id, serial, confirmation } => Self::ProgramSystemFpga { device_id, serial, confirmation },
+            FlasherAction::FinishSystem { port, identity, confirmation } => Self::FinishSystem { port, identity, confirmation },
             FlasherAction::SelectSetupRelease { path } => Self::SelectSetupRelease { path },
             FlasherAction::InstallSetup { port, identity, confirmation } => Self::InstallSetup { port, identity, confirmation },
             FlasherAction::ListMenuPorts => Self::ListMenuPorts,
@@ -116,6 +125,11 @@ impl From<FlasherAction> for Action {
 #[derive(Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case", deny_unknown_fields)]
 enum Action {
+    PrepareSystem { port: String, identity: String, confirmation: String },
+    ListInstallProgrammers,
+    ProgramSystemFpga { device_id: String, serial: Option<String>, confirmation: String },
+    FinishSystem { port: String, identity: String, confirmation: String },
+
     SelectSetupRelease {
         path: String,
     },
@@ -302,6 +316,25 @@ fn assets(state: &State) -> Result<(SdManifest, PathBuf)> {
         .clone()
         .ok_or_else(|| invalid("Select the repository's SD asset manifest first"))
 }
+fn pending_request(state: &State) -> Result<PathBuf> {
+    let index: Value = read_json(&state.data.join("pending-system.json"))?;
+    let relative = index["request"].as_str().ok_or_else(|| invalid("Missing installation request"))?;
+    if !relative.starts_with("bl616-backups/") { return Err(invalid("Invalid installation backup location")); }
+    confined(&state.data, relative)
+}
+fn pending_view(state: &State) -> Option<Value> {
+    let path = pending_request(state).ok()?;
+    let mut value: Value = read_json(&path).ok()?;
+    if value["phase"] == "complete" { return None; }
+    value["backup"] = json!(path.parent()?.to_string_lossy());
+    Some(value)
+}
+fn installation_step(state: &State, app: &tauri::AppHandle, mut args: Vec<String>) -> Result<Value> {
+    args.extend(["--release".into(), state.resources.join("nanoblast-v0.2.0").to_string_lossy().into_owned()]);
+    let handle = app.clone();
+    let report: Reporter = Arc::new(move |message| event(&handle, message, "info"));
+    crate::hardware::bl616::system_step(&state.resources, &args, report)
+}
 fn snapshot_sync(state: &State) -> Result<Snapshot> {
     // Flashing detects BL616 UPDATE ports directly; it does not inspect SD cards
     // or probe unrelated FPGA programmers.
@@ -313,6 +346,7 @@ fn snapshot_sync(state: &State) -> Result<Snapshot> {
     s.devices = devices.clone();
     s.storage = storage.clone();
     Ok(Snapshot {
+        pending_install: pending_view(state),
         simulation: state.simulation,
         devices,
         storage,
@@ -345,6 +379,41 @@ fn execute(state: &State, action: Action, app: &tauri::AppHandle) -> Result<Valu
         return simulate(state, action, app);
     }
     match action {
+        Action::PrepareSystem { port, identity, confirmation } => {
+            if pending_view(state).is_some() { return Err(invalid("Finish the pending installation before preparing another")); }
+            let selected = state.session.lock().unwrap().selected_setup.clone().ok_or_else(|| invalid("Choose a system release first"))?;
+            let selected_path = selected["path"].as_str().ok_or_else(|| invalid("Selected release has no path"))?;
+            let stamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_nanos();
+            let relative = format!("bl616-backups/install-{stamp}");
+            let backup = state.data.join(&relative);
+            event(app, format!("Installation backups: {}", backup.display()), "info");
+            let value = installation_step(state, app, vec!["--system-stage".into(),"prepare".into(),"--current-bundle".into(),selected_path.into(),"--output".into(),backup.to_string_lossy().into_owned(),"--port".into(),port,"--identity".into(),identity,"--confirmation".into(),confirmation])?;
+            if value["phase"] != "primary_verified" { return Err(invalid("Primary programmer verification missing")); }
+            fs::write(state.data.join("pending-system.json"), serde_json::to_vec(&json!({"request":format!("{relative}/system-install.json")}))?)?;
+            Ok(value)
+        }
+        Action::ListInstallProgrammers => {
+            let pending = pending_view(state).ok_or_else(|| invalid("No installation is waiting for a programmer"))?;
+            if pending["phase"] != "primary_verified" && pending["phase"] != "fpga_pending" { return Err(invalid("Installation is not waiting for FPGA programming")); }
+            Ok(json!(crate::hardware::detector::scan()?))
+        }
+        Action::ProgramSystemFpga { device_id, serial, confirmation } => {
+            let device = crate::hardware::detector::scan()?.into_iter().find(|device| device.id == device_id && device.serial == serial)
+                .ok_or_else(|| invalid("Selected programmer disconnected or changed"))?;
+            if !device.accessible { return Err(invalid("Cannot open the programmer. Check the USB driver and permissions.")); }
+            let request = pending_request(state)?;
+            let mut args = vec!["--system-stage".into(),"fpga".into(),"--request".into(),request.to_string_lossy().into_owned(),"--busdev".into(),device_id,"--confirmation".into(),confirmation];
+            if let Some(serial) = serial { args.extend(["--serial".into(),serial]); }
+            let value = installation_step(state, app, args)?;
+            if value["phase"] != "fpga_verified" { return Err(invalid("FPGA readback verification missing")); }
+            Ok(value)
+        }
+        Action::FinishSystem { port, identity, confirmation } => {
+            let request = pending_request(state)?;
+            let value = installation_step(state, app, vec!["--system-stage".into(),"finish".into(),"--request".into(),request.to_string_lossy().into_owned(),"--port".into(),port,"--identity".into(),identity,"--confirmation".into(),confirmation,"--trusted-receipts".into(),state.data.join("verified-release-layouts.json").to_string_lossy().into_owned()])?;
+            if value["phase"] != "complete" { return Err(invalid("Final controller verification missing")); }
+            Ok(json!({"phase":"complete","target":value["target"],"backup":request.parent().unwrap().to_string_lossy()}))
+        }
         Action::SelectSetupRelease { path } => {
             state.session.lock().unwrap().selected_setup = None;
             let stamp = std::time::SystemTime::now()
@@ -404,7 +473,7 @@ fn execute(state: &State, action: Action, app: &tauri::AppHandle) -> Result<Valu
                 Some(&selected_path),
             )?;
             Ok(
-                json!({"message":"Firmware and all four cores verified. Disconnect every USB and power cable for 5 seconds, then reconnect without UPDATE and select a core.", "backup":backup.to_string_lossy()}),
+                json!({"message": if selected["kind"] == "arcade" { "Arcade application verified. The primary programmer and FPGA recovery cache were preserved. Disconnect power, insert the prepared SD card, reconnect HDMI and power on without UPDATE." } else { "Firmware and all four cores verified. Disconnect every USB and power cable for 5 seconds, then reconnect without UPDATE and select a core." }, "backup":backup.to_string_lossy()}),
             )
         }
         Action::InstallDevelopmentMenu {
@@ -764,6 +833,9 @@ fn execute(state: &State, action: Action, app: &tauri::AppHandle) -> Result<Valu
 }
 fn simulate(state: &State, action: Action, app: &tauri::AppHandle) -> Result<Value> {
     match action {
+        Action::PrepareSystem { .. } | Action::ProgramSystemFpga { .. } | Action::FinishSystem { .. } | Action::ListInstallProgrammers =>
+            Err(invalid("Use the isolated browser preview for first-install simulation")),
+
         Action::SelectSetupRelease { path } => {
             if path != "SIMULATION-RELEASE" { return Err(invalid("Preview cannot read actual release files")); }
             let release=json!({"version":"Demo release","path":"SIMULATION","source":"Demo-release.zip","bytes":667424,"sha256":"0000000000000000000000000000000000000000000000000000000000000000","cores":4,"layout":"BL616 / NBCRXZ01"});

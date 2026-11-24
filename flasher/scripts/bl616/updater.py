@@ -132,7 +132,7 @@ def durable(path,data):
         f.flush()
         os.fsync(f.fileno())
 
-def install(transport, changes, out, planner=planned):
+def install(transport, changes, out, planner=planned, protected=PROTECTED):
     def read_all(label):
         parts=[]
         for start in range(0,SIZE,0x20000):
@@ -145,7 +145,7 @@ def install(transport, changes, out, planner=planned):
         return data
     before=read_all('before')
     expected=planner(before,changes)
-    record={'status':'BACKUP_VALIDATED','before_sha256':sha(before),'expected_sha256':sha(expected),'protected_regions':PROTECTED}
+    record={'status':'BACKUP_VALIDATED','before_sha256':sha(before),'expected_sha256':sha(expected),'protected_regions':protected}
     durable(out/'plan.json',json.dumps(record,indent=2).encode())
     print(f'Backup validated: {out}. Keep power connected until readback finishes.',flush=True)
     for address,data in changes:
@@ -159,6 +159,10 @@ def install(transport, changes, out, planner=planned):
     record.update(status='FULL_FLASH_READBACK_PASS',after_sha256=sha(after))
     durable(out/'result.json',json.dumps(record,indent=2).encode())
     print('FULL_FLASH_READBACK_PASS',flush=True)
+
+def selected_bundle(folder):
+    import arcade_bundle, current_bundle
+    return arcade_bundle if (Path(folder)/'release.json').exists() else current_bundle
 
 def main():
     parser=argparse.ArgumentParser()
@@ -178,8 +182,15 @@ def main():
     parser.add_argument('--port')
     parser.add_argument('--identity')
     parser.add_argument('--confirmation')
+    parser.add_argument('--system-stage',choices=['inspect','prepare','fpga','finish'])
+    parser.add_argument('--request',type=Path)
+    parser.add_argument('--busdev')
+    parser.add_argument('--serial')
     args=parser.parse_args()
-    if args.files:
+    if args.system_stage:
+        import system_install
+        print('RESULT '+json.dumps(system_install.run(args)),flush=True)
+    elif args.files:
         import usb_files
         print('RESULT '+json.dumps(usb_files.run(args)),flush=True)
     elif args.self_check:
@@ -188,7 +199,7 @@ def main():
         from libs.bflb_eflash_loader import BflbEflashLoader
         from libs.bflb_utils import eflash_loader_parser_init
         require((Path(bflb_mcu_tool.__file__).parent/'chips/bl616/eflash_loader/eflash_loader_cfg.conf').is_file(),'Missing loader resources')
-        import usb_files, development_menu, current_bundle, release_files
+        import usb_files, development_menu, current_bundle, arcade_bundle, release_files, system_install
         print('NanoBlast BL616 and USB ROM helpers ready')
     elif args.select_release:
         require(args.release and args.output and not args.port,'Release selection needs a cache and no device arguments')
@@ -197,7 +208,7 @@ def main():
     elif args.plan_backup:
         require(args.current_bundle and args.release and not args.port and not args.output,'Offline planning needs a bundle/release and no device arguments')
         import current_bundle
-        changes,planner=current_bundle.load(args.current_bundle,args.release,args.trusted_receipts)
+        changes,planner=selected_bundle(args.current_bundle).load(args.current_bundle,args.release,args.trusted_receipts)
         before=args.plan_backup.read_bytes();expected=planner(before,changes)
         print('RESULT '+json.dumps(dict(status='OFFLINE_PLAN_PASS',before_sha256=sha(before),expected_sha256=sha(expected))),flush=True)
     elif args.list:
@@ -210,7 +221,7 @@ def main():
         if args.current_bundle:
             require(not args.development_menu and not args.restore_menu,'Choose one firmware bundle')
             import current_bundle
-            changes,planner=current_bundle.load(args.current_bundle,args.release,args.trusted_receipts)
+            changes,planner=selected_bundle(args.current_bundle).load(args.current_bundle,args.release,args.trusted_receipts)
         elif args.development_menu:
             import development_menu
             changes,planner=development_menu.load(args.development_menu,args.release,args.restore_menu)
@@ -220,7 +231,7 @@ def main():
         args.output.mkdir(parents=True,exist_ok=False)
         install(Transport(args.port,args.identity,args.output),changes,args.output,planner=planner)
         if args.current_bundle:
-            try: current_bundle.remember(args.trusted_receipts,changes)
+            try: selected_bundle(args.current_bundle).remember(args.trusted_receipts,changes)
             except Exception as error: print(f'WARNING: Flash verified, but installed-release history could not be saved: {error}',flush=True)
 
 if __name__=='__main__':
