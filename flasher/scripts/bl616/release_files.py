@@ -1,6 +1,6 @@
 """Bounded local ZIP/folder/manifest selection. No hardware or network access."""
 import json, shutil, stat, zipfile, os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import current_bundle as bundle
 import updater as u
 import arcade_bundle as arcade
@@ -42,7 +42,7 @@ def select(source, output, release):
                         if isinstance(m,dict) and (('firmware' in m and 'assets' in m) or m.get('base')=='solid-loading-v0.2.0' or m.get('format')==arcade.FORMAT):
                             manifests.append((entry,m))
                 u.require(len(manifests)==1,'Select the firmware release ZIP, or the exact release manifest; one matching manifest is required')
-                entry,m=manifests[0];prefix=Path(entry.filename).parent
+                entry,m=manifests[0];prefix=PurePosixPath(entry.filename).parent
                 if m.get('format')==arcade.FORMAT:
                     records=[m.get('firmware')]+m.get('video_images',[])
                 elif 'assets' in m:records=[dict(m['firmware'],file=m['firmware'].get('file','nanoblast-firmware.bin'))]+m['assets']
