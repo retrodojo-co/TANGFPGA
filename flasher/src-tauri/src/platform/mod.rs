@@ -1,8 +1,7 @@
 use crate::{
     storage::detector::StorageDevice,
-    utils::errors::{Error, Result},
+    utils::{errors::{Error, Result}, process::command},
 };
-use std::process::Command;
 pub mod linux;
 pub mod macos;
 pub mod windows;
@@ -30,7 +29,7 @@ pub fn eject(d: &StorageDevice) -> Result<()> {
     active::eject(d)
 }
 pub fn output(exe: &str, args: &[&str]) -> Result<Vec<u8>> {
-    let out = Command::new(exe).args(args).output()?;
+    let out = command(exe).args(args).output()?;
     if !out.status.success() {
         return Err(Error::Io(format!("{exe}: {}. If access was denied, authorize only this operation using your OS disk utility.",String::from_utf8_lossy(&out.stderr))));
     }

@@ -3389,7 +3389,7 @@ dependencies = [
 
 [[package]]
 name = "tangfpga-flasher"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "plist",
  "reqwest 0.12.28",
