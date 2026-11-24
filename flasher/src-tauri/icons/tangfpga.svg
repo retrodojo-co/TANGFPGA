@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 128 128">
+<title>TangFPGA Flasher</title>
+<rect width="128" height="128" rx="26" fill="#080808"/>
+<g stroke="#f5f5f5" stroke-width="5" fill="none"><rect x="31" y="31" width="66" height="66" rx="8"/><path d="M45 18v13m19-13v13m19-13v13M45 97v13m19-13v13m19-13v13M18 45h13m-13 19h13m-13 19h13m66-38h13M97 64h13M97 83h13"/></g>
+<path d="M57 43h14v25h13L64 88 44 68h13z" fill="#ff1527"/>
+<path d="M35 116h14" stroke="#ff1527" stroke-width="5"/><path d="M50 116h14" stroke="#0085ff" stroke-width="5"/><path d="M65 116h14" stroke="#00df28" stroke-width="5"/><path d="M80 116h14" stroke="#ffe000" stroke-width="5"/></svg>

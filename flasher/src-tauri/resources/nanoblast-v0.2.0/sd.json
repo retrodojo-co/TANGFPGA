@@ -1,0 +1,48 @@
+{
+  "version": "nanoblast-v0.2.0-sd1",
+  "firmware_versions": [
+    "v0.2.0"
+  ],
+  "directories": [
+    "nes",
+    "sms",
+    "gb",
+    "snes",
+    "gb/saves",
+    "nanoblast"
+  ],
+  "files": [],
+  "cores": [
+    {
+      "name": "NES / Famicom",
+      "directory": "nes",
+      "extensions": [
+        "nes"
+      ]
+    },
+    {
+      "name": "Master System / Game Gear",
+      "directory": "sms",
+      "extensions": [
+        "sms",
+        "gg"
+      ]
+    },
+    {
+      "name": "Game Boy / Game Boy Colour",
+      "directory": "gb",
+      "extensions": [
+        "gb",
+        "gbc"
+      ]
+    },
+    {
+      "name": "SNES (experimental; hidden by default)",
+      "directory": "snes",
+      "extensions": [
+        "sfc",
+        "smc"
+      ]
+    }
+  ]
+}
