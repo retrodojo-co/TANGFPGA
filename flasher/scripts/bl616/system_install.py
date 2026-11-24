@@ -108,7 +108,8 @@ def loader(resources):
 
 
 def command(exe,args):
-    result=subprocess.run([str(exe)]+args,capture_output=True,text=True)
+    options={'creationflags':subprocess.CREATE_NO_WINDOW} if sys.platform=='win32' else {}
+    result=subprocess.run([str(exe)]+args,capture_output=True,text=True,**options)
     print(result.stdout,flush=True);print(result.stderr,file=sys.stderr,flush=True)
     u.require(result.returncode==0,'FPGA programmer failed. Retain both backups and reconnect the same board before retrying.')
     return result.stdout+'\n'+result.stderr

@@ -1,12 +1,9 @@
 //! Narrow, bundled BL616 helper. It performs backup/layout validation before any write.
 use super::programmer::{NativeRunner, ProcessRunner, Reporter};
 use crate::firmware::{nanoblast::NanoRelease, validator};
-use crate::utils::errors::{invalid, Error, Result};
+use crate::utils::{errors::{invalid, Error, Result}, process::command};
 use serde::{Deserialize, Serialize};
-use std::{
-    path::{Path, PathBuf},
-    process::Command,
-};
+use std::path::{Path, PathBuf};
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Port {
     pub port: String,
@@ -27,7 +24,7 @@ fn helper(resources: &Path) -> Result<PathBuf> {
     Ok(exe)
 }
 pub fn ports(resources: &Path) -> Result<Vec<Port>> {
-    let output = Command::new(helper(resources)?).arg("--list").output()?;
+    let output = command(helper(resources)?).arg("--list").output()?;
     if !output.status.success() {
         return Err(invalid(String::from_utf8_lossy(&output.stderr)));
     }
@@ -123,7 +120,7 @@ pub fn install_selected(
 }
 
 pub fn select_release(resources: &Path, source: &Path, cache: &Path) -> Result<serde_json::Value> {
-    let output = Command::new(helper(resources)?)
+    let output = command(helper(resources)?)
         .args([
             "--select-release",
             &source.to_string_lossy(),
@@ -187,7 +184,7 @@ pub fn files(
                 other => other,
             })?
     } else {
-        let result = Command::new(helper(resources)?).args(&args).output()?;
+        let result = command(helper(resources)?).args(&args).output()?;
         if !result.status.success() {
             return Err(invalid(String::from_utf8_lossy(&result.stderr)));
         }

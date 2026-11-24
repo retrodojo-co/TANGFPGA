@@ -132,4 +132,20 @@ class Install(unittest.TestCase):
         s.fpga(a,self.cli)
         self.assertEqual(json.loads(a.request.read_text())['phase'],'fpga_verified')
 
+class BackgroundProgrammer(unittest.TestCase):
+    def test_windows_launch_hides_console_and_retains_diagnostics(self):
+        result=SimpleNamespace(returncode=0,stdout='programmer output',stderr='programmer diagnostics')
+        with patch.object(s.sys,'platform','win32'), patch.object(s.subprocess,'CREATE_NO_WINDOW',0x08000000,create=True), patch.object(s.subprocess,'run',return_value=result) as run:
+            output=s.command(Path('programmer.exe'),['-V'])
+        self.assertEqual(run.call_args.kwargs['creationflags'],0x08000000)
+        self.assertTrue(run.call_args.kwargs['capture_output'])
+        self.assertIn(result.stdout,output)
+        self.assertIn(result.stderr,output)
+
+    def test_failed_programmer_remains_an_error(self):
+        result=SimpleNamespace(returncode=7,stdout='',stderr='device unavailable')
+        with patch.object(s.subprocess,'run',return_value=result):
+            with self.assertRaisesRegex(ValueError,'FPGA programmer failed'):
+                s.command(Path('programmer'),['-V'])
+
 if __name__=='__main__':unittest.main()

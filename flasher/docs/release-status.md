@@ -1,3 +1,17 @@
+# TangFPGA Flasher 0.3.1 — Windows console windows
+
+Fixes the terminal that briefly appears during background USB polling (every
+six seconds), release selection and programming. All background native tools
+use Windows CREATE_NO_WINDOW, including the Python helper's FPGA programmer.
+Captured diagnostics, progress reporting and failure status remain available.
+The helper retains its console subsystem so its stdout protocol still works.
+
+Adds a native Windows test that launches a child process, checks that
+GetConsoleWindow returns no console, and verifies stdout, stderr and a nonzero
+exit code. Python tests cover the nested programmer launch and failure handling.
+Native builds and Windows verification are pending for this patch. Firmware
+write ranges, backup checks and the three-step installation flow are unchanged.
+
 # TangFPGA Flasher 0.3.0 — first installation and conversion
 
 Adds an explicit three-step Nano 20K first-install/switch-system flow, full
@@ -11,7 +25,9 @@ tests, and 46 Python tests pass. Synthetic two-chip tests cover blank → consol
 blank → Arcade → console → Arcade, protected regions, exact write bounds,
 confirmation gates, wrong devices, partial backups, mismatched controller
 serials and corrupted readback. The browser completes all three stages without
-hardware access. Native installers are being rebuilt.
+hardware access. Native Mac and Windows builds both pass in [run 45436585725](https://github.com/retrodojo-co/TANGFPGA/actions/runs/45436585725). Both installer SHA-256 checksums match. The Mac package passes signature, version/minimum-OS and bundled helper/programmer hash checks; its frozen helper validates both actual console and local Arcade first-install profiles without accessing hardware. Windows packaging verifies x64 executable architecture, hashes and standalone programmer startup without the MSYS2 build tools in PATH.
+
+Version 0.3.0 release packages and checksums are in `artifacts/release/v0.3.0/`.
 
 Hardware boot/first-install/conversion tests and Windows install/uninstall tests
 remain pending. This release is a prerelease candidate; Mac is ad-hoc signed and

@@ -18,7 +18,7 @@ pub struct Loader {
     pub bundled: bool,
 }
 fn loader_command(path: &Path) -> Command {
-    let mut command = Command::new(path);
+    let mut command = crate::utils::process::command(path);
     if cfg!(target_os = "linux")
         && path
             .parent()
