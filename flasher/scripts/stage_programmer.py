@@ -24,6 +24,10 @@ def dependencies(binary):
         names = re.findall(r'DLL Name:\s*(\S+)', run('objdump', '-p', str(binary)))
         paths = []
         for name in names:
+            # Windows API-set contracts are resolved by the OS loader and are
+            # intentionally not physical files to copy into the app.
+            if name.lower().startswith(('api-ms-win-', 'ext-ms-win-')):
+                continue
             found = next((Path(p) / name for p in os.environ['PATH'].split(os.pathsep) if (Path(p) / name).is_file()), None)
             if found is None and (Path(os.environ['WINDIR']) / 'System32' / name).exists():
                 continue
