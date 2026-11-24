@@ -1,3 +1,22 @@
+# TangFPGA Flasher 0.3.0 — first installation and conversion
+
+Adds an explicit three-step Nano 20K first-install/switch-system flow, full
+controller and FPGA backups, pinned vendor primary programmer, verified FPGA
+boot programming and final controller/system installation. Supports an empty
+user-flash board, console → Arcade, and Arcade → console. Existing update-only
+mode stays conservative and is the default.
+
+Local checks: production frontend build, nine frontend tests, 24 Rust desktop
+tests, and 44 Python tests pass. Synthetic two-chip tests cover blank → console,
+blank → Arcade → console → Arcade, protected regions, exact write bounds,
+confirmation gates, wrong devices, partial backups, mismatched controller
+serials and corrupted readback. The browser completes all three stages without
+hardware access. Native installers are being rebuilt.
+
+Hardware boot/first-install/conversion tests and Windows install/uninstall tests
+remain pending. This release is a prerelease candidate; Mac is ad-hoc signed and
+not notarized, Windows is unsigned. See [first-installation instructions](first-installation.md).
+
 # TangFPGA Flasher 0.2.0 — Arcade support
 
 Adds automatic `TANGFPGA_ARCADE_V1` package detection and application-only updates

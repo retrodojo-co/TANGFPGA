@@ -22,3 +22,17 @@ flashing must be checked on Windows before treating it as a validated release.
 The source/build-kit ZIP contains source and this build entry point, not a
 prebuilt `.exe`. A Mac cannot freeze the Windows Python helper. The repository
 workflow builds the app and helper together on a native Windows runner.
+
+## Programmer build prerequisites for 0.3.0
+
+Install MSYS2 in `C:\msys64` and use its MINGW64 shell to install:
+
+```sh
+pacman -S --needed mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja mingw-w64-x86_64-pkgconf mingw-w64-x86_64-libusb mingw-w64-x86_64-libftdi mingw-w64-x86_64-hidapi mingw-w64-x86_64-zlib
+```
+
+The PowerShell build script checks out and builds the pinned openFPGALoader,
+stages its runtime DLLs and corresponding source, then freezes the BL616 helper
+and packages both into the installer. These tools are bundled for users; they
+do not need a build environment. A compatible USB driver is needed for the
+FPGA programmer phase. The app does not automatically replace USB drivers.

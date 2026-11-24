@@ -19,6 +19,10 @@ def main():
     resources = ROOT / 'src-tauri/resources/bl616'
     helper = resources / 'nanoblast-bl616/nanoblast-bl616.exe'
     require_x64_pe(helper)
+    programmer = ROOT / 'src-tauri/resources/programmer/openFPGALoader.exe'
+    require_x64_pe(programmer)
+    assert hashlib.sha256(programmer.read_bytes()).hexdigest() == programmer.with_name('sha256.txt').read_text().strip()
+    assert programmer.with_name('openFPGALoader-source.tar.gz').is_file()
     digest = hashlib.sha256(helper.read_bytes()).hexdigest()
     assert digest == (resources / 'sha256.txt').read_text().strip(), 'Helper hash mismatch'
     assert (resources / 'dependencies.json').is_file(), 'Missing helper dependency inventory'
@@ -37,6 +41,7 @@ def main():
         'sha256': checksum,
         'app_and_helper_windows_x64': True,
         'helper_hash_verified': True,
+        'fpga_programmer_x64_and_hash_verified': True,
         'signed': False,
         'hardware_tested': False,
         'installer_ui_tested': False,

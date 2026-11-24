@@ -25,6 +25,17 @@ describe("firmware-only flasher", () => {
     await choose(sim);
     expect(sim.snapshot().setup_firmware).toMatchObject({kind: "arcade", cores: 0, video_images: 9, hardware_tested: false});
   });
+  it("gates all three installation stages and only reports completion at the end", async () => {
+    const sim = new Simulator(); await choose(sim);
+    await expect(sim.perform({type:"finish_system",port:"sim:bl616",identity:"SIMULATION",confirmation:"FINISH CONSOLE NANO20K sim:bl616"})).rejects.toThrow("FPGA verification");
+    await expect(sim.perform({type:"prepare_system",port:"sim:bl616",identity:"SIMULATION",confirmation:"UPDATE sim:bl616"})).rejects.toThrow("confirmation");
+    await sim.perform({type:"prepare_system",port:"sim:bl616",identity:"SIMULATION",confirmation:"INSTALL CONSOLE NANO20K sim:bl616"});
+    expect(sim.snapshot().pending_install?.phase).toBe("primary_verified");
+    await sim.perform({type:"program_system_fpga",device_id:"sim:fpga",serial:"SIMULATION",confirmation:"FPGA NANO20K sim:fpga"});
+    expect(sim.snapshot().pending_install?.phase).toBe("fpga_verified");
+    await expect(sim.perform({type:"finish_system",port:"sim:bl616",identity:"SIMULATION",confirmation:"FINISH CONSOLE NANO20K sim:bl616"})).resolves.toMatchObject({phase:"complete",target:"console"});
+    expect(sim.snapshot().pending_install).toBeNull();
+  });
   it("requires exact device confirmation", async () => {
     const sim = new Simulator(); await choose(sim);
     await expect(sim.perform({ ...update, confirmation: "yes" })).rejects.toThrow("confirmation");

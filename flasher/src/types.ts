@@ -65,7 +65,14 @@ export interface SelectedRelease {
   cores: number;
   layout: string;
 }
+export interface PendingInstall {
+  target: "arcade" | "console";
+  version: string;
+  phase: "primary_verified" | "fpga_pending" | "fpga_verified";
+  backup?: string;
+}
 export interface Snapshot {
+  pending_install?: PendingInstall | null;
   simulation: boolean;
   nanoblast: NanoRelease | null;
   setup_firmware?: SelectedRelease | null;
@@ -102,6 +109,10 @@ export interface MenuPort {
   description: string;
 }
 export type Action =
+  | { type: "prepare_system"; port: string; identity: string; confirmation: string }
+  | { type: "list_install_programmers" }
+  | { type: "program_system_fpga"; device_id: string; serial: string | null; confirmation: string }
+  | { type: "finish_system"; port: string; identity: string; confirmation: string }
   | { type: "select_setup_release"; path: string }
   | { type: "install_setup"; port: string; identity: string; confirmation: string }
   | { type: "list_menu_ports" }

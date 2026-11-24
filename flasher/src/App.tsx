@@ -15,6 +15,7 @@ import logo from "./assets/tangfpga.png";
 import {
   errorMessage,
   type Action,
+  type Device,
   type MenuPort,
   type OperationEvent,
   type Snapshot,
@@ -39,10 +40,16 @@ export default function App() {
   const [snapshot, setSnapshot] = useState<Snapshot>();
   const [updatePorts, setUpdatePorts] = useState<MenuPort[]>([]);
   const [firmwarePort, setFirmwarePort] = useState<MenuPort>();
+  const [programmers, setProgrammers] = useState<Device[]>([]);
+  const [programmer, setProgrammer] = useState<Device>();
+  const [installation, setInstallation] = useState(false);
+  const [boardConfirmed, setBoardConfirmed] = useState(false);
+  const [completedKind, setCompletedKind] = useState<string>();
   const [scanning, setScanning] = useState(false);
   const [busy, setBusy] = useState(false);
   const busyRef = useRef(false),
     scanRef = useRef(false);
+  useEffect(() => { setBoardConfirmed(false); }, [programmer?.id, programmer?.serial, firmwarePort?.identity]);
   const choosingRef = useRef(false);
   const [choosing, setChoosing] = useState(false);
   const [notice, setNotice] = useState("");
@@ -70,6 +77,14 @@ export default function App() {
       const value = await api.snapshot();
       setSnapshot(value);
       if (busyRef.current) return;
+      if (value.pending_install && value.pending_install.phase !== "fpga_verified") {
+        setUpdatePorts([]); setFirmwarePort(undefined);
+        const result = await api.perform({type:"list_install_programmers"});
+        const devices = (Array.isArray(result) ? result : []) as Device[];
+        setProgrammers(devices);
+        setProgrammer(old => devices.find(device => device.id === old?.id && device.serial === old?.serial) ?? (devices.length === 1 ? devices[0] : undefined));
+        return;
+      }
       const updates = await api.perform({ type: "list_menu_ports" });
       if (busyRef.current) return;
       const ports = (Array.isArray(updates) ? updates : []).filter(
@@ -133,8 +148,12 @@ export default function App() {
   const locked = busy || scanning || choosing;
   const simulation = snapshot?.simulation ?? !desktop;
   const arcade = snapshot?.setup_firmware?.kind === "arcade";
+  const pending = snapshot?.pending_install;
+  const needsProgrammer = !!pending && pending.phase !== "fpga_verified";
+  const connected = needsProgrammer ? !!programmer : !!firmwarePort;
   const selectRelease = async (folder = false) => {
     if (busyRef.current || scanRef.current || choosingRef.current) return;
+    setBoardConfirmed(false);
     choosingRef.current = true;
     setChoosing(true);
     try {
@@ -166,17 +185,35 @@ export default function App() {
     setBackup("");
     const result = await run(
       {
-        type: "install_setup",
+        type: installation ? "prepare_system" : "install_setup",
         port: firmwarePort.port,
         identity: firmwarePort.identity,
-        confirmation: `UPDATE ${firmwarePort.port}`,
+        confirmation: installation ? `INSTALL ${arcade ? "ARCADE" : "CONSOLE"} NANO20K ${firmwarePort.port}` : `UPDATE ${firmwarePort.port}`,
       },
-      arcade ? "Install Arcade application" : "Install firmware and cores",
+      installation ? "Prepare Nano 20K programmer" : arcade ? "Install Arcade application" : "Install firmware and cores",
     );
+    if (installation && result) { setBoardConfirmed(false); await scan(); return; }
     if (result && typeof result === "object") {
       setInstalled(true);
       if ("backup" in result) setBackup(String(result.backup));
     }
+  };
+  const continueInstallation = async () => {
+    if (!pending || !boardConfirmed) return;
+    if (pending.phase === "fpga_verified") {
+      if (!firmwarePort) return;
+      const result = await run({type:"finish_system",port:firmwarePort.port,identity:firmwarePort.identity,
+        confirmation:`FINISH ${pending.target.toUpperCase()} NANO20K ${firmwarePort.port}`}, "Finish system installation");
+      if (result) {
+        setInstalled(true); setCompletedKind(pending.target);
+        if (typeof result === "object" && "backup" in result) setBackup(String(result.backup));
+      }
+    } else {
+      if (!programmer) return;
+      await run({type:"program_system_fpga",device_id:programmer.id,serial:programmer.serial,
+        confirmation:`FPGA NANO20K ${programmer.id}`}, "Back up and install FPGA boot image");
+    }
+    setBoardConfirmed(false); await scan();
   };
   const phase = busy
     ? stage
@@ -197,7 +234,7 @@ export default function App() {
             <span className="pixel-cursor" aria-hidden="true">
               ▶
             </span>{" "}
-            FLASHER <span className="app-version">v0.2.0</span>
+            FLASHER <span className="app-version">v0.3.0</span>
           </div>
           <button
             className="icon-button"
@@ -233,11 +270,12 @@ export default function App() {
           </div>
         )}
         <div
-          className={`compact-connection ${firmwarePort ? "connected" : ""}`}
+          className={`compact-connection ${connected ? "connected" : ""}`}
         >
           <i />
           {scanning
             ? "Looking for console…"
+            : needsProgrammer ? (programmer ? "FPGA programmer connected" : "Reconnect without UPDATE")
             : firmwarePort
               ? "UPDATE mode connected"
               : "No console connected"}
@@ -258,7 +296,21 @@ export default function App() {
           </div>
         )}
         <div className="workspace-grid">
-          <section
+          {pending ? <section className="panel compact-firmware">
+            <div className="compact-title"><CircuitBoard size={19}/><h1>Install {pending.target === "arcade" ? "Arcade" : "Console"}</h1><span className="mini-tag">Step {pending.phase === "fpga_verified" ? "3" : "2"} / 3</span></div>
+            <p className="hardware-scope">{pending.version}<br/>{pending.phase === "fpga_verified"
+              ? "Unplug USB. Hold UPDATE while reconnecting the same board, then release UPDATE."
+              : "Unplug USB. Reconnect the same board normally, without holding UPDATE. Keep HDMI and the SD card disconnected."}</p>
+            <p className="release-warning">{pending.phase === "fpga_verified"
+              ? "The FPGA boot image is verified. Finish installing the controller application and system data."
+              : "This step backs up the complete FPGA flash, replaces its boot image, then verifies full readback. Connect only the board being installed."}</p>
+            {pending.phase !== "fpga_verified" && programmers.length > 1 && <select aria-label="Installation programmer" value={programmer?.id ?? ""} disabled={locked} onChange={event => setProgrammer(programmers.find(device => device.id === event.target.value))}><option value="">Choose programmer</option>{programmers.map(device => <option key={device.id} value={device.id}>{device.description} · {device.id}</option>)}</select>}
+            {pending.phase === "fpga_verified" && updatePorts.length > 1 && <select aria-label="Installation UPDATE port" value={firmwarePort?.identity ?? ""} disabled={locked} onChange={event => setFirmwarePort(updatePorts.find(port => port.identity === event.target.value))}><option value="">Choose UPDATE port</option>{updatePorts.map(port => <option key={port.identity} value={port.identity}>{port.port}</option>)}</select>}
+            <label className="install-confirm"><input type="checkbox" checked={boardConfirmed} disabled={locked} onChange={event => setBoardConfirmed(event.target.checked)}/>This is the same Tang Nano 20K. Replace its selected system.</label>
+            <button className="primary full-width" disabled={locked || !boardConfirmed || (pending.phase === "fpga_verified" ? !firmwarePort : !programmer?.accessible)} onClick={() => void continueInstallation()}>{pending.phase === "fpga_verified" ? "3 · Finish controller installation" : "2 · Install FPGA boot image"}</button>
+            <p className="hardware-scope">If no device appears, use Find console above.{pending.phase !== "fpga_verified" && " On Windows, the JTAG interface needs a compatible libusb/WinUSB driver."}</p>
+            <details className="backup-path"><summary>Installation backup folder</summary><code>{pending.backup}</code></details>
+          </section> : <section
             className="panel compact-firmware"
             aria-labelledby="firmware-title"
           >
@@ -269,8 +321,9 @@ export default function App() {
                 {snapshot?.setup_firmware ? "Selected" : "Release file"}
               </span>
             </div>
+            <label className="install-mode">Operation<select aria-label="Flashing operation" value={installation ? "install" : "update"} disabled={locked} onChange={event => {setInstallation(event.target.value === "install");setBoardConfirmed(false);setInstalled(false);}}><option value="update">Update existing system</option><option value="install">First install / switch system</option></select></label>
             <p className="hardware-scope">20K · BL616 UPDATE<br />
-              {arcade
+              {installation ? "Step 1 of 3: back up the controller and install the Nano 20K programmer. Remove the SD card and HDMI first." : arcade
                 ? "Application only · existing Arcade installation required. Remove SD card and disconnect HDMI before updating."
                 : "Choose a console or Arcade System release."}
             </p>
@@ -306,7 +359,7 @@ export default function App() {
                 "Select a downloaded ZIP or release manifest"
               )}
             </p>
-            {arcade && (
+            {arcade && !installation && (
               <p className="release-warning">
                 Recovery cache preserved. Copy the release’s SD-card files separately.
                 {snapshot?.setup_firmware?.hardware_tested === false && " Hardware validation pending for this release."}
@@ -333,12 +386,13 @@ export default function App() {
                 ))}
               </select>
             )}
+            {installation && <label className="install-confirm"><input type="checkbox" checked={boardConfirmed} disabled={locked} onChange={event => setBoardConfirmed(event.target.checked)}/>This is a Tang Nano 20K. Back up and replace its current system.</label>}
             <button
               className="primary full-width"
               disabled={
                 locked ||
                 !firmwarePort ||
-                !snapshot?.setup_firmware
+                !snapshot?.setup_firmware || (installation && !boardConfirmed)
               }
               onClick={() => void flash()}
             >
@@ -347,7 +401,7 @@ export default function App() {
               ) : (
                 <ArrowDownToLine size={17} />
               )}
-              {arcade ? "Flash Arcade application" : "Flash firmware & cores"}
+              {installation ? "1 · Prepare Nano 20K" : arcade ? "Flash Arcade application" : "Flash firmware & cores"}
             </button>
             {!firmwarePort && (
               <p className="connection-hint">UPDATE mode required</p>
@@ -362,7 +416,7 @@ export default function App() {
                   <p>
                     {simulation
                       ? "No hardware or files were modified."
-                      : arcade
+                      : arcade || completedKind === "arcade"
                         ? "Unplug all USB and power. Insert the prepared SD card, reconnect HDMI and power on without UPDATE."
                         : "Unplug all USB and power for 5 seconds. Reconnect, then select a core."}
                   </p>
@@ -375,7 +429,7 @@ export default function App() {
                 </div>
               </div>
             )}
-          </section>
+          </section>}
 
         </div>
         <div className={`compact-status ${outcome}`} role="status">
