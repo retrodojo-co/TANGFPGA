@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 160" role="img" aria-labelledby="title">
+  <title id="title">TANGFPGA</title>
+  <rect width="720" height="160" rx="22" fill="#14202d"/>
+  <g fill="none" stroke="#7de1c8" stroke-width="5" stroke-linecap="square">
+    <rect x="55" y="48" width="64" height="64" rx="7"/>
+    <path d="M72 36v12m30-12v12m-30 64v12m30-12v12M43 65h12m-12 30h12m64-30h12m-12 30h12"/>
+    <path d="M70 84h10l8-15 7 22 7-7h4"/>
+  </g>
+  <text x="157" y="101" fill="#f4f8fb" font-family="monospace" font-weight="bold" font-size="62" letter-spacing="5">TANGFPGA</text>
+</svg>

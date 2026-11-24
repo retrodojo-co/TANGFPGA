@@ -1,0 +1,6 @@
+{
+  "identifier": "main",
+  "description": "Firmware flasher: events and native release-file selection only",
+  "windows": ["main"],
+  "permissions": ["core:default", "dialog:allow-open"]
+}

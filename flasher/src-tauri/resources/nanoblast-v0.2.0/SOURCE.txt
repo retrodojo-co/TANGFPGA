@@ -1,0 +1,4 @@
+Corresponding source: https://github.com/NANO-BLAST/NANOBLAST-Release/releases/download/v0.2.0/NANOBLAST-v0.2.0-source.zip
+SHA-256: 4b0814afaa702945a11f58fb43fbe870bc59a2b838715cffa38fd3b8c1105f5c
+Source snapshot under reference/nanoblast-v0.2.0 in this development workspace.
+Firmware and core binaries are unmodified GPL-3.0/per-file-licensed NanoBlast release assets; the setup utility license does not replace their licenses.

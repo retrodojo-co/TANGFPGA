@@ -1,0 +1,54 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "TangFPGA Flasher",
+  "version": "0.1.0",
+  "identifier": "co.retrodojo.tangfpga.flasher",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist",
+    "features": [
+      "desktop"
+    ]
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "TangFPGA Flasher",
+        "width": 440,
+        "height": 820,
+        "minWidth": 440,
+        "minHeight": 820,
+        "maxWidth": 440,
+        "maxHeight": 820,
+        "resizable": false,
+        "maximizable": false
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; connect-src ipc: http://ipc.localhost; img-src 'self' asset: http://asset.localhost data:; style-src 'self' 'unsafe-inline'; script-src 'self'"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "resources": [
+      "resources/bl616/",
+      "resources/nanoblast-v0.2.0/"
+    ],
+    "category": "Utility",
+    "shortDescription": "Update TangFPGA BL616 firmware and cores",
+    "macOS": {
+      "minimumSystemVersion": "11.0",
+      "signingIdentity": "-"
+    },
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  }
+}
