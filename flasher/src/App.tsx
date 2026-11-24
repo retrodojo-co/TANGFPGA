@@ -234,7 +234,7 @@ export default function App() {
             <span className="pixel-cursor" aria-hidden="true">
               ▶
             </span>{" "}
-            FLASHER <span className="app-version">v0.3.0</span>
+            FLASHER <span className="app-version">v0.3.1</span>
           </div>
           <button
             className="icon-button"
