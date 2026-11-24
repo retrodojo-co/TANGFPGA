@@ -7,7 +7,7 @@ user-flash board, console → Arcade, and Arcade → console. Existing update-on
 mode stays conservative and is the default.
 
 Local checks: production frontend build, nine frontend tests, 24 Rust desktop
-tests, and 44 Python tests pass. Synthetic two-chip tests cover blank → console,
+tests, and 46 Python tests pass. Synthetic two-chip tests cover blank → console,
 blank → Arcade → console → Arcade, protected regions, exact write bounds,
 confirmation gates, wrong devices, partial backups, mismatched controller
 serials and corrupted readback. The browser completes all three stages without

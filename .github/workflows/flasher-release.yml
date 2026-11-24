@@ -50,9 +50,9 @@ jobs:
       - uses: msys2/setup-msys2@v2
         if: runner.os == 'Windows'
         with:
-          msystem: MINGW64
+          msystem: UCRT64
           update: true
-          install: mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja mingw-w64-x86_64-pkgconf mingw-w64-x86_64-libusb mingw-w64-x86_64-libftdi mingw-w64-x86_64-hidapi mingw-w64-x86_64-zlib
+          install: mingw-w64-ucrt-x86_64-toolchain mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-ninja mingw-w64-ucrt-x86_64-pkgconf mingw-w64-ucrt-x86_64-libusb mingw-w64-ucrt-x86_64-libftdi mingw-w64-ucrt-x86_64-hidapi mingw-w64-ucrt-x86_64-zlib
       - uses: actions/checkout@v4
         with:
           repository: trabucayre/openFPGALoader
@@ -74,7 +74,7 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          $env:PATH = "C:\msys64\mingw64\bin;" + $env:PATH
+          $env:PATH = "C:\msys64\ucrt64\bin;" + $env:PATH
           python scripts/stage_programmer.py ../.programmer-build/openFPGALoader.exe --license ../.programmer-source/LICENSE
       - name: Include programmer corresponding source
         run: python -c "import pathlib,subprocess; subprocess.run(['git','-C','../.programmer-source','archive','--format=tar.gz','-o',str(pathlib.Path('src-tauri/resources/programmer/openFPGALoader-source.tar.gz').resolve()),'HEAD'],check=True)"

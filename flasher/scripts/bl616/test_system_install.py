@@ -79,6 +79,20 @@ class Install(unittest.TestCase):
 
     def test_blank_to_console(self):self.stages(self.args(RELEASE,'console'))
 
+    def test_completely_erased_flash_chips(self):
+        self.mcu[:]=b'\xff'*u.SIZE
+        self.fpga[:]=b'\xff'*s.FPGA_SIZE
+        self.stages(self.args(self.bundle,'arcade'))
+
+    def test_primary_permission_is_scoped_to_setup(self):
+        normal=u.Transport.__new__(u.Transport)
+        privileged=s.PrimaryTransport.__new__(s.PrimaryTransport)
+        privileged.perform=lambda *args,**kwargs:None
+        with self.assertRaises(ValueError):normal.write(0,bytes(4096),self.root/'forbidden.bin')
+        with self.assertRaises(ValueError):privileged.write(0x40000,bytes(4096),self.root/'forbidden.bin')
+        privileged.write(0,bytes(4096),self.root/'permitted.bin')
+        self.assertTrue((self.root/'permitted.bin').exists())
+
     def test_confirmation_prevents_first_mutation(self):
         a=self.args(self.bundle,'arcade');a.confirmation='UPDATE TEST';before=bytes(self.mcu)
         with self.assertRaises(ValueError):s.prepare(a,self.Primary)

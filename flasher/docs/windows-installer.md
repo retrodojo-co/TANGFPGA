@@ -25,10 +25,10 @@ workflow builds the app and helper together on a native Windows runner.
 
 ## Programmer build prerequisites for 0.3.0
 
-Install MSYS2 in `C:\msys64` and use its MINGW64 shell to install:
+Install MSYS2 in `C:\msys64` and use its UCRT64 shell to install:
 
 ```sh
-pacman -S --needed mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja mingw-w64-x86_64-pkgconf mingw-w64-x86_64-libusb mingw-w64-x86_64-libftdi mingw-w64-x86_64-hidapi mingw-w64-x86_64-zlib
+pacman -S --needed mingw-w64-ucrt-x86_64-toolchain mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-ninja mingw-w64-ucrt-x86_64-pkgconf mingw-w64-ucrt-x86_64-libusb mingw-w64-ucrt-x86_64-libftdi mingw-w64-ucrt-x86_64-hidapi mingw-w64-ucrt-x86_64-zlib
 ```
 
 The PowerShell build script checks out and builds the pinned openFPGALoader,

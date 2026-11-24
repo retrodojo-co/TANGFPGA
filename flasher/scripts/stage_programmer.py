@@ -97,7 +97,7 @@ def main():
     for index, notice in enumerate(args.notices):
         shutil.copy2(notice, licenses / f'{index}-{notice.parent.name}-{notice.name}')
     license_roots = ([Path('/opt/homebrew/opt/hidapi'), Path('/opt/homebrew/opt/libusb'), Path('/opt/homebrew/opt/libftdi')]
-                     if sys.platform == 'darwin' else [Path('C:/msys64/mingw64/share/licenses')])
+                     if sys.platform == 'darwin' else [Path('C:/msys64/ucrt64/share/licenses')])
     for license_root in license_roots:
         if not license_root.exists(): continue
         candidates = license_root.rglob('*') if sys.platform == 'win32' else license_root.glob('*')

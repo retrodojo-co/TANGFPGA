@@ -35,8 +35,8 @@ try {
         if (Test-Path $generated) { Remove-Item $generated -Recurse -Force }
     }
     # A native programmer is required for first installation and conversion.
-    $mingw = 'C:\msys64\mingw64\bin'
-    if (-not (Test-Path (Join-Path $mingw 'cmake.exe'))) { throw 'Install MSYS2 MINGW64 programmer prerequisites from docs/windows-installer.md.' }
+    $mingw = 'C:\msys64\ucrt64\bin'
+    if (-not (Test-Path (Join-Path $mingw 'cmake.exe'))) { throw 'Install MSYS2 UCRT64 programmer prerequisites from docs/windows-installer.md.' }
     $env:PATH = $mingw + ';' + $env:PATH
     $programmerSource = Join-Path $root '.windows-build/openFPGALoader'
     if (-not (Test-Path (Join-Path $programmerSource '.git'))) { Invoke-Checked 'git' @('clone', '--no-checkout', 'https://github.com/trabucayre/openFPGALoader.git', $programmerSource) }
